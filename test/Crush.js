@@ -51,10 +51,8 @@ describe("Crush", () => {
 			await crushchain.addCrush("3188102244", "0x6663");
 			// curitiba er
 			await crushchain.addCrush("2991229952", "0x6572");
-			const crushes = await crushchain.getCrushes();
-
+			const crushes = await crushchain.getCrushes(1, 3);
 			expect(crushes.length).to.equal(3);
-
 			expect(crushes).to.deep.equal([
 				"157.55.39.148 zj",
 				"190.6.148.100 fc",

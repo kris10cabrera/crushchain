@@ -94,11 +94,21 @@ contract CrushRecords {
         return crushCount;
     }
 
-    function getCrushes() public view returns (string[] memory) {
-        string[] memory _crushes = new string[](crushCount);
-        for (uint i = 1; i <= crushCount; i++) {
+    function getCrushes(
+        uint page,
+        uint pageSize
+    ) public view returns (string[] memory) {
+        uint startIndex = (page - 1) * pageSize + 1;
+        uint endIndex = startIndex + pageSize - 1;
+        if (endIndex > crushCount) {
+            endIndex = crushCount;
+        }
+        require(startIndex <= endIndex, "Invalid pagination parameters");
+
+        string[] memory _crushes = new string[](endIndex - startIndex + 1);
+        for (uint i = startIndex; i <= endIndex; i++) {
             Crush memory crush = crushes[i];
-            _crushes[i - 1] = string(
+            _crushes[i - startIndex] = string(
                 abi.encodePacked(
                     _uint32ToIp(crush.ipAddress),
                     " ",
