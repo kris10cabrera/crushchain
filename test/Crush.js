@@ -43,11 +43,8 @@ describe("Crush", () => {
 		});
 		it("will create a list of crushes and return via getCrushes", async () => {
 			const { crushchain } = await loadFixture(deployCrushChain);
-			// ny, zj
 			await crushchain.addCrush("0x7A6A");
-			// la habana fc
 			await crushchain.addCrush("0x6663");
-			// curitiba er
 			await crushchain.addCrush("0x6572");
 			const crushes = await crushchain.getCrushes(1, 667);
 			expect(crushes.length).to.equal(3);
