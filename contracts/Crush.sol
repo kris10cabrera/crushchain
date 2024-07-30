@@ -2,92 +2,49 @@
 pragma solidity ^0.8.24;
 
 error NotTwoInitials();
+error LimitReached();
+error InvalidPagination();
 
 contract CrushRecords {
     struct Crush {
-        uint32 ipAddress;
         bytes2 initials;
     }
-    event CrushAdded(uint32 ipAddress, bytes2 initials);
-    uint256 public crushCount;
+    event CrushAdded(bytes2 initials);
+    uint16 public crushCount;
     mapping(uint256 crushId => Crush crush) public crushes;
 
     function _checkInitialsAreLetters(bytes2 initials) private pure {
         bytes1 firstLetter = initials[0];
         bytes1 secondLetter = initials[1];
-        if (
-            !((uint8(firstLetter) >= 65 && uint8(firstLetter) <= 90) ||
-                (uint8(firstLetter) >= 97 && uint8(firstLetter) <= 122) ||
-                (uint8(secondLetter) >= 65 && uint8(secondLetter) <= 90) ||
-                (uint8(secondLetter) >= 97 && uint8(secondLetter) <= 122))
-        ) {
+
+        bool isFirstLetterValid = (uint8(firstLetter) >= 65 &&
+            uint8(firstLetter) <= 90) ||
+            (uint8(firstLetter) >= 97 && uint8(firstLetter) <= 122);
+
+        bool isSecondLetterValid = (uint8(secondLetter) >= 65 &&
+            uint8(secondLetter) <= 90) ||
+            (uint8(secondLetter) >= 97 && uint8(secondLetter) <= 122);
+
+        if (!isFirstLetterValid || !isSecondLetterValid) {
             revert NotTwoInitials();
         }
     }
 
-    // Function to convert a uint32 to an IP address string
-    function _uint32ToIp(uint32 ip) private pure returns (string memory) {
-        // Extract each byte from the uint32
-        uint8[4] memory bytesArray;
-        bytesArray[0] = uint8(ip >> 24);
-        bytesArray[1] = uint8(ip >> 16);
-        bytesArray[2] = uint8(ip >> 8);
-        bytesArray[3] = uint8(ip);
-
-        // Convert bytes to string
-        return
-            string(
-                abi.encodePacked(
-                    _uintToString(bytesArray[0]),
-                    ".",
-                    _uintToString(bytesArray[1]),
-                    ".",
-                    _uintToString(bytesArray[2]),
-                    ".",
-                    _uintToString(bytesArray[3])
-                )
-            );
-    }
-
-    // Helper function to convert uint8 to string
-    function _uintToString(uint8 v) private pure returns (string memory) {
-        if (v == 0) {
-            return "0";
-        }
-        uint8 temp = v;
-        uint8 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (v != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint8(v % 10)));
-            v /= 10;
-        }
-        return string(buffer);
-    }
-
-    function addCrush(
-        uint32 _ipAddress,
-        bytes2 _initials
-    ) public returns (uint256 crushId) {
+    function addCrush(bytes2 _initials) public returns (uint256 crushId) {
         _checkInitialsAreLetters(_initials);
+        if (crushCount >= 666) {
+            revert LimitReached();
+        }
         crushCount++;
-        crushes[crushCount] = Crush(_ipAddress, _initials);
-        emit CrushAdded(_ipAddress, _initials);
-        return crushCount;
+        crushId = crushCount;
+        crushes[crushId] = Crush(_initials);
+        emit CrushAdded(_initials);
+        return crushId;
     }
 
-    function getCrush(
-        uint256 crushId
-    ) public view returns (string memory, string memory) {
+    function getCrush(uint256 crushId) public view returns (string memory) {
         Crush memory crush = crushes[crushId];
-        return (
-            _uint32ToIp(crush.ipAddress),
-            string(abi.encodePacked(crush.initials))
-        );
+        return (string(abi.encodePacked(crush.initials)));
     }
 
     function getCrushCount() public view returns (uint) {
@@ -95,26 +52,29 @@ contract CrushRecords {
     }
 
     function getCrushes(
-        uint page,
-        uint pageSize
+        uint256 page,
+        uint256 pageSize
     ) public view returns (string[] memory) {
-        uint startIndex = (page - 1) * pageSize + 1;
-        uint endIndex = startIndex + pageSize - 1;
-        if (endIndex > crushCount) {
-            endIndex = crushCount;
+        if (page == 0 || pageSize == 0 || pageSize > 667) {
+            revert InvalidPagination();
         }
-        require(startIndex <= endIndex, "Invalid pagination parameters");
+        uint256 startIndex;
+        uint256 endIndex;
+        unchecked {
+            startIndex = (page - 1) * pageSize + 1;
+            if (startIndex > crushCount || startIndex < 1) {
+                revert InvalidPagination();
+            }
+            endIndex = startIndex + pageSize - 1;
+            if (endIndex > crushCount) {
+                endIndex = crushCount;
+            }
+        }
 
         string[] memory _crushes = new string[](endIndex - startIndex + 1);
-        for (uint i = startIndex; i <= endIndex; i++) {
+        for (uint256 i = startIndex; i <= endIndex; i++) {
             Crush memory crush = crushes[i];
-            _crushes[i - startIndex] = string(
-                abi.encodePacked(
-                    _uint32ToIp(crush.ipAddress),
-                    " ",
-                    string(abi.encodePacked(crush.initials))
-                )
-            );
+            _crushes[i - startIndex] = string(abi.encodePacked(crush.initials));
         }
         return _crushes;
     }
