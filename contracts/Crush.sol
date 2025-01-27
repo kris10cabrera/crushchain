@@ -4,14 +4,29 @@ pragma solidity ^0.8.24;
 error NotTwoInitials();
 error LimitReached();
 error InvalidPagination();
+error NotAdmin();
 
 contract CrushRecords {
+    address public immutable admin;
+
+    constructor() {
+        admin = msg.sender;
+    }
+
     struct Crush {
         bytes2 initials;
     }
     event CrushAdded(bytes2 initials);
+    event CrushDeleted(uint256 crushId);
     uint16 public crushCount;
     mapping(uint256 crushId => Crush crush) public crushes;
+
+    modifier onlyAdmin() {
+        if (msg.sender != admin) {
+            revert NotAdmin();
+        }
+        _;
+    }
 
     function _checkInitialsAreLetters(bytes2 initials) private pure {
         bytes1 firstLetter = initials[0];
@@ -44,11 +59,27 @@ contract CrushRecords {
 
     function getCrush(uint256 crushId) public view returns (string memory) {
         Crush memory crush = crushes[crushId];
+        if (crush.initials == 0) {
+            return "";
+        }
         return (string(abi.encodePacked(crush.initials)));
     }
 
     function getCrushCount() public view returns (uint) {
         return crushCount;
+    }
+
+    function deleteCrush(uint256 crushId) public onlyAdmin {
+        // Check if crush exists
+        if (crushId == 0 || crushId > crushCount) {
+            revert InvalidPagination();
+        }
+
+        // Delete the crush
+        delete crushes[crushId];
+
+        // Emit event
+        emit CrushDeleted(crushId);
     }
 
     function getCrushes(
