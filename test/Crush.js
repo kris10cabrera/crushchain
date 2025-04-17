@@ -38,6 +38,12 @@ describe("Crush", () => {
 			const crush = await crushchain.getCrush(1);
 			expect(crush).to.equal("AB");
 		});
+		it("will not allow you to set an empty crush,", async () => {
+			const { crushchain } = await loadFixture(deployCrushChain);
+			await expect(crushchain.addCrush("0x")).to.be.rejectedWith(
+				"incorrect data length",
+			);
+		});
 		it("will not allow you to set crush with more than 2 letters", async () => {
 			const { crushchain } = await loadFixture(deployCrushChain);
 			await expect(crushchain.addCrush("0x616161")).to.be.rejectedWith(

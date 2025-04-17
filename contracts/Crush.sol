@@ -45,7 +45,14 @@ contract CrushRecords {
         }
     }
 
+    function _checkIsNotEmpty(bytes2 initials) private pure {
+        if (initials[0] == 0 && initials[1] == 0) {
+            revert NotTwoInitials();
+        }
+    }
+
     function addCrush(bytes2 _initials) public returns (uint256 crushId) {
+        _checkIsNotEmpty(_initials);
         _checkInitialsAreLetters(_initials);
         if (crushCount >= 666) {
             revert LimitReached();
@@ -63,10 +70,6 @@ contract CrushRecords {
             return "";
         }
         return (string(abi.encodePacked(crush.initials)));
-    }
-
-    function getCrushCount() public view returns (uint) {
-        return crushCount;
     }
 
     function deleteCrush(uint256 crushId) public onlyAdmin {
