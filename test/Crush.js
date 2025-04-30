@@ -61,7 +61,7 @@ describe("Crush", () => {
 			await crushchain.addCrush("0x7A6A");
 			await crushchain.addCrush("0x6663");
 			await crushchain.addCrush("0x6572");
-			const crushes = await crushchain.getCrushes(1, 667);
+			const crushes = await crushchain.getCrushes(1, 333);
 			expect(crushes.length).to.equal(3);
 			expect(crushes).to.deep.equal(["zj", "fc", "er"]);
 		});
