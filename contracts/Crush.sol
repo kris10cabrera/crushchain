@@ -28,6 +28,7 @@ contract CrushRecords {
 
     constructor() {
         admin = msg.sender;
+        allowlist[0xf1A8aA91C10402497a358b3dFECE6D46c88433f3] = true;
         allowlist[0x6dAf4588d1118afa8fcF065dB222Fe27e6Afd4E1] = true;
         allowlist[0x0dA5536D4Daf485967E172de05ED5bF7d73a6cc0] = true;
         allowlist[0x8A05fA58d533a6e40C4381E3247Cf4c68ca61cdc] = true;
