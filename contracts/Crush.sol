@@ -5,6 +5,7 @@ error NotTwoInitials();
 error LimitReached();
 error InvalidPagination();
 error NotAdmin();
+error CrushNotFound();
 
 contract CrushRecords {
     address public immutable admin;
@@ -16,8 +17,10 @@ contract CrushRecords {
     struct Crush {
         bytes2 initials;
     }
+
     event CrushAdded(bytes2 initials);
     event CrushDeleted(uint256 crushId);
+
     uint16 public crushCount;
     mapping(uint256 crushId => Crush crush) public crushes;
 
@@ -32,13 +35,11 @@ contract CrushRecords {
         bytes1 firstLetter = initials[0];
         bytes1 secondLetter = initials[1];
 
-        bool isFirstLetterValid = (uint8(firstLetter) >= 65 &&
-            uint8(firstLetter) <= 90) ||
-            (uint8(firstLetter) >= 97 && uint8(firstLetter) <= 122);
+        bool isFirstLetterValid = (uint8(firstLetter) >= 65 && uint8(firstLetter) <= 90)
+            || (uint8(firstLetter) >= 97 && uint8(firstLetter) <= 122);
 
-        bool isSecondLetterValid = (uint8(secondLetter) >= 65 &&
-            uint8(secondLetter) <= 90) ||
-            (uint8(secondLetter) >= 97 && uint8(secondLetter) <= 122);
+        bool isSecondLetterValid = (uint8(secondLetter) >= 65 && uint8(secondLetter) <= 90)
+            || (uint8(secondLetter) >= 97 && uint8(secondLetter) <= 122);
 
         if (!isFirstLetterValid || !isSecondLetterValid) {
             revert NotTwoInitials();
@@ -73,22 +74,21 @@ contract CrushRecords {
     }
 
     function deleteCrush(uint256 crushId) public onlyAdmin {
-        // Check if crush exists
         if (crushId == 0 || crushId > crushCount) {
             revert InvalidPagination();
         }
-
-        // Delete the crush
-        delete crushes[crushId];
-
-        // Emit event
+        if (!crushes[crushId].exists) {
+            revert CrushNotFound();
+        }
+        if (crushId != crushCount) {
+            crushes[crushId] = crushes[crushCount];
+        }
+        delete crushes[crushCount];
+        crushCount--;
         emit CrushDeleted(crushId);
     }
 
-    function getCrushes(
-        uint256 page,
-        uint256 pageSize
-    ) public view returns (string[] memory) {
+    function getCrushes(uint256 page, uint256 pageSize) public view returns (string[] memory) {
         if (page == 0 || pageSize == 0 || pageSize > 667) {
             revert InvalidPagination();
         }
